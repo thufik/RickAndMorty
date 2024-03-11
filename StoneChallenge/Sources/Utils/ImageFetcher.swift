@@ -1,10 +1,3 @@
-//
-//  ImageFetcher.swift
-//  StoneChallenge
-//
-//  Created by Rebecca Mello on 15/12/22.
-//
-
 import UIKit
 
 class ImageFetcher {

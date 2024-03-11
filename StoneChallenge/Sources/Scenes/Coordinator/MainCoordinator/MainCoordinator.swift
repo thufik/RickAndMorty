@@ -17,7 +17,7 @@ class MainCoordinator: Coordinator {
     }
 
     func start() {
-        let vc = HomeViewController()
+        let vc = HomeFactory.make()
         navigationController.pushViewController(vc, animated: false)
     }
 }

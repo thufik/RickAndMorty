@@ -1,13 +1,6 @@
-//
-//  Character.swift
-//  StoneChallenge
-//
-//  Created by Rebecca Mello on 13/12/22.
-//
-
 import Foundation
 
-public struct CharacterInfos: Decodable, Equatable {
+public struct CharacterInfos: Codable, Equatable, Hashable {
     let name: String
     let status: String
     let species: String

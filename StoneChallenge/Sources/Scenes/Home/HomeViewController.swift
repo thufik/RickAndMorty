@@ -1,79 +1,102 @@
 import UIKit
 
-protocol CollectionDelegate: AnyObject {
+protocol HomeViewProtocol: AnyObject {
     func reloadCollectionData()
+    func setupNavigation()
+    func setupView()
+    func setupConstraints()
 }
 
-class HomeViewController: UIViewController, CollectionDelegate {
+class HomeViewController: UIViewController {
     
-    let contentView: HomeView
-    var viewModel: HomeViewModel
+    private lazy var datasource: UITableViewDiffableDataSource<Int, CharacterInfos> = {
         
-    override func loadView() {
-        view = contentView
-    }
+        let datasource = UITableViewDiffableDataSource<Int, CharacterInfos>(
+            tableView: tableView,
+            cellProvider: { tableView,indexPath,itemIdentifier in
+          
+                guard let cell = tableView.dequeueReusableCell(
+                    withIdentifier: HomeCharacterTableViewCell.cellIdentifier,
+                    for: indexPath) as? HomeCharacterTableViewCell
+                else { preconditionFailure() }
+                
+                let characterInIndex = self.interactor.characters[indexPath.row]
+
+                cell.setupCell(character: characterInIndex)
+                return cell
+                
+        })
+        
+        return datasource
+    }()
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+    private lazy var tableView: UITableView = {
+        let tableView = UITableView()
         
-        setupNavigation()
-        getAllCharacters()
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.register(HomeCharacterTableViewCell.self, forCellReuseIdentifier: HomeCharacterTableViewCell.cellIdentifier)
+        tableView.delegate = self
         
-        self.contentView.collectionView.dataSource = self
-        self.contentView.collectionView.delegate = self
-    }
-    
-    init() {
-        self.contentView = HomeView()
-        self.viewModel = HomeViewModel()
-       
-        super.init(nibName: nil, bundle: nil)
-        self.viewModel.delegate = self
-    }
+        return tableView
+    }()
+
+    private let interactor: HomeInteractorProtocol
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private func setupNavigation() {
+    init(interactor: HomeInteractorProtocol) {
+        self.interactor = interactor
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        interactor.viewDidLoad()
+    }
+}
+
+extension HomeViewController: HomeViewProtocol {
+    func setupNavigation() {
+        view.backgroundColor = .systemBackground
+        
         title = "Characters"
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationController?.navigationBar.tintColor = UIColor(named: "Green")
     }
+
+    func setupView() {
+        view.addSubview(tableView)
+    }
     
-    func getAllCharacters() {
-        viewModel.getCharacters()
+    func setupConstraints() {
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
     }
     
     func reloadCollectionData() {
-        self.contentView.collectionView.reloadData()
+        var snapshot = NSDiffableDataSourceSnapshot<Int, CharacterInfos>()
+        snapshot.appendSections([0])
+        snapshot.appendItems(interactor.characters)
+        
+        datasource.apply(snapshot, animatingDifferences: true)
     }
 }
 
-extension HomeViewController: UICollectionViewDelegate {
+extension HomeViewController: UITableViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let offsetY = self.contentView.collectionView.contentOffset.y
-        let contentHeight = self.contentView.collectionView.contentSize.height
-        let height = self.contentView.collectionView.frame.size.height
+        let offsetY = self.tableView.contentOffset.y
+        let contentHeight = self.tableView.contentSize.height
+        let height = self.tableView.frame.size.height
         
         if offsetY > contentHeight - height {
-            viewModel.getCharacters()
+            interactor.loadCharacters()
         }
-    }
-}
-
-extension HomeViewController: UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return viewModel.characters.count
-    }
-
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CharacterCell.collectionIdentifier, for: indexPath) as? CharacterCell else { preconditionFailure() }
-        let characterInIndex = viewModel.characters[indexPath.row]
-
-        cell.setupCell(character: characterInIndex)
-        return cell
     }
 }
