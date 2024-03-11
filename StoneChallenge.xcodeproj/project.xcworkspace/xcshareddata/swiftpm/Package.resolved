@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "ramrequestmanager",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/thufik/RAMRequestManager",
+      "state" : {
+        "branch" : "master",
+        "revision" : "b4c326e33c6e2cd2d9042b5d22cd1e95d71b9fbe"
+      }
+    }
+  ],
+  "version" : 2
+}
