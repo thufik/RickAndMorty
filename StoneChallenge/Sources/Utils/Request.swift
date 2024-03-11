@@ -2,6 +2,7 @@ import Foundation
 
 public enum Request {
     case characters(Int)
+    case filter(String, String)
     
     public var url: URL {
         var defaultBaseUrl = InfoPlist.baseURL.rawValue.infoVariable()
@@ -17,14 +18,19 @@ public enum Request {
             return [
                 URLQueryItem(name: "page", value: "\(page)"),
             ]
+        case .filter(let name, let status):
+            return [
+                URLQueryItem(name: "name", value: "\(name)"),
+                URLQueryItem(name: "status", value: "\(status.lowercased())"),
+            ]
         }
     }
     
     
     public var value: String {
         switch self {
-            case .characters:
-                return "/api/character"
+        case .characters, .filter:
+            return "/api/character"
         }
     }
 }

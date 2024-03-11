@@ -3,19 +3,21 @@ import Foundation
 protocol HomeInteractorProtocol {
     func viewDidLoad()
     func loadCharacters()
-    
-    var characters: [CharacterInfos] { get }
+    func scrollViewDidScroll(offsetY: CGFloat, height: CGFloat, contentHeight: CGFloat)
+    func clickFilter()
+    func getCharacter(at index: Int) -> CharacterInfos
+    func selectCellAt(index: Int)
 }
 
 final class HomeInteractor: HomeInteractorProtocol  {
+    
     private let worker: HomeWorkerProtocol
     
     private let presenter: HomePresenterProtocol
     
-    internal var characters: [CharacterInfos] = []
-    
+    private var characters: [CharacterInfos] = []
     private var page = 1
-    private var canFetch: Bool = true
+    private var canFetch = true
     
     init(worker: HomeWorkerProtocol, presenter: HomePresenterProtocol) {
         self.worker = worker
@@ -34,19 +36,41 @@ final class HomeInteractor: HomeInteractorProtocol  {
         canFetch = false
         
         worker.getCharacters(page: page) { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let chars):
-                    self.characters.append(contentsOf: chars.results ?? [])
-                    self.page += 1
-                    self.presenter.reload()
-                case .failure:
-                    self.presenter.reload()
-                }
-                
-                self.canFetch = true
+            switch result {
+            case .success(let chars):
+                self.characters.append(contentsOf: chars.results ?? [])
+                self.page += 1
+                self.presenter.reload(with: self.characters)
+            case .failure:
+                self.presenter.reload(with: self.characters)
             }
+            
+            self.canFetch = true
         }
+    }
+    
+    func scrollViewDidScroll(offsetY: CGFloat, height: CGFloat, contentHeight: CGFloat) {
+        if offsetY > contentHeight - height {
+            loadCharacters()
+        }
+    }
+    
+    func getCharacter(at index: Int) -> CharacterInfos {
+        characters[index]
+    }
+    
+    func clickFilter() {
+        presenter.showFilter { characters in
+            self.page = 1
+            self.characters = characters
+            self.presenter.reload(with: characters)
+        }
+    }
+    
+    func selectCellAt(index: Int) {
+        let character = characters[index]
+        
+        presenter.showDetails(character: character)
     }
 }
 

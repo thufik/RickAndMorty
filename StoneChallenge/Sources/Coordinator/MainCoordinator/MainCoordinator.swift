@@ -1,10 +1,3 @@
-//
-//  MainCoordinator.swift
-//  StoneChallenge
-//
-//  Created by Rebecca Mello on 19/12/22.
-//
-
 import UIKit
 
 class MainCoordinator: Coordinator {
@@ -17,7 +10,7 @@ class MainCoordinator: Coordinator {
     }
 
     func start() {
-        let vc = HomeFactory.make()
+        let vc = HomeFactory.make(navigationController: navigationController)
         navigationController.pushViewController(vc, animated: false)
     }
 }

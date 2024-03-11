@@ -1,7 +1,7 @@
 import UIKit
 
 protocol HomeViewProtocol: AnyObject {
-    func reloadCollectionData()
+    func reloadCollectionData(with snapshot: NSDiffableDataSourceSnapshot<Int, CharacterInfos>)
     func setupNavigation()
     func setupView()
     func setupConstraints()
@@ -20,7 +20,7 @@ class HomeViewController: UIViewController {
                     for: indexPath) as? HomeCharacterTableViewCell
                 else { preconditionFailure() }
                 
-                let characterInIndex = self.interactor.characters[indexPath.row]
+                let characterInIndex = self.interactor.getCharacter(at: indexPath.row)
 
                 cell.setupCell(character: characterInIndex)
                 return cell
@@ -35,6 +35,9 @@ class HomeViewController: UIViewController {
         
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.register(HomeCharacterTableViewCell.self, forCellReuseIdentifier: HomeCharacterTableViewCell.cellIdentifier)
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 300
+        tableView.separatorStyle = .none
         tableView.delegate = self
         
         return tableView
@@ -56,6 +59,10 @@ class HomeViewController: UIViewController {
 
         interactor.viewDidLoad()
     }
+    
+    @objc private func showFilter() {
+        interactor.clickFilter()
+    }
 }
 
 extension HomeViewController: HomeViewProtocol {
@@ -65,6 +72,9 @@ extension HomeViewController: HomeViewProtocol {
         title = "Characters"
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationController?.navigationBar.tintColor = UIColor(named: "Green")
+        navigationItem.rightBarButtonItem =  UIBarButtonItem(
+            image: UIImage(named: "Filter")?
+                .resizeImage(targetSize: CGSize(width: 25, height: 25)), style: .done, target: self, action: #selector(showFilter))
     }
 
     func setupView() {
@@ -74,17 +84,13 @@ extension HomeViewController: HomeViewProtocol {
     func setupConstraints() {
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.topAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
     
-    func reloadCollectionData() {
-        var snapshot = NSDiffableDataSourceSnapshot<Int, CharacterInfos>()
-        snapshot.appendSections([0])
-        snapshot.appendItems(interactor.characters)
-        
+    func reloadCollectionData(with snapshot: NSDiffableDataSourceSnapshot<Int, CharacterInfos>) {        
         datasource.apply(snapshot, animatingDifferences: true)
     }
 }
@@ -95,8 +101,10 @@ extension HomeViewController: UITableViewDelegate {
         let contentHeight = self.tableView.contentSize.height
         let height = self.tableView.frame.size.height
         
-        if offsetY > contentHeight - height {
-            interactor.loadCharacters()
-        }
+        interactor.scrollViewDidScroll(offsetY: offsetY, height: height, contentHeight: contentHeight)
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        interactor.selectCellAt(index: indexPath.row)
     }
 }

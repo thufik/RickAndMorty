@@ -1,9 +1,10 @@
 import UIKit
 
 enum HomeFactory {
-    static func make() -> UIViewController {
+    static func make(navigationController: UINavigationController) -> UIViewController {
         let worker = HomeWorker()
-        let presenter = HomePresenter()
+        let router = HomeRouter(navigationController: navigationController)
+        let presenter = HomePresenter(router: router)
         let interactor = HomeInteractor(worker: worker, presenter: presenter)
         let viewController = HomeViewController(interactor: interactor)
         
